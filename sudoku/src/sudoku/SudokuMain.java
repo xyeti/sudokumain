@@ -1,7 +1,5 @@
+
 package sudoku;
-
-import java.lang.*;
-
 
 public class SudokuMain {
 	public static int sudokuSize = 9;

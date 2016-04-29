@@ -1,11 +1,18 @@
 package sudoku;
-import java.lang.*;
+
 
 public class Square {
 	
 	private int value;
 	Boolean isFinal;
+	private int options;
 	
+	public int getOptions() {
+		return options;
+	}
+	public void setOptions(int options) {
+		this.options = options;
+	}
 	public int getValue() {
 		return value;
 	}
