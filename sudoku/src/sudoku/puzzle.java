@@ -42,7 +42,128 @@ public class puzzle {
 			}
 		} // Input sudoku values
 		
+		System.out.println("Original puzzle");
 		printSudoku(Squares);
+		
+		
+		// 1. Check boxes, rows and columns
+		eliminateChoices();
+		System.out.println("After First elimination");
+		printSudoku(Squares);
+		
+		// 2. Check for Unique value present in box, row, column
+		recentUpdates = findUniqueValue(0);
+		eliminateChoices();
+		recentUpdates = findUniqueValue(1);
+		eliminateChoices();
+		System.out.println("After Unique value elimination");
+		printSudoku(Squares);
+		
+/*		
+		System.out.println("2 Count follows");
+		for (int i=0;i<sudokuSize;i++)
+		{
+			for (int j=0;j<sudokuSize;j++)
+			{
+				if (Squares[i][j].isFinal == false && (Squares[i][j].getOptions() == 2))
+				{
+					System.out.println("row "+i+ "Col "+j +"="+Squares[i][j].getValue());
+				}
+			}
+		}
+*/
+		
+		//System.out.println("After mask in a box,row,column");
+		//printSudoku(Squares);
+		return 0;
+	}
+	
+	public boolean findUniqueValue(int rorc)
+	{
+		int val=0;
+		boolean uniqueFound = true;
+		int count=0;
+		
+		while (uniqueFound != false)
+		{
+			uniqueFound = false;
+			for(int i=0; i < sudokuSize;i++)
+			{
+				int[] arr = { 0, 0 , 0 , 0, 0, 0 , 0 , 0, 0};
+				
+				for (int j=0;j<sudokuSize;j++)
+				{
+					if (rorc == 0)
+					{
+						if (Squares[i][j].isFinal != true)
+						{
+							val = Squares[i][j].getValue();
+							arr = getArrCount(arr, val);
+						} // counting options in the row
+					
+					} //row pop
+					else
+					{
+						if (Squares[j][i].isFinal != true)
+						{
+							val = Squares[j][i].getValue();
+							arr = getArrCount(arr, val);
+						} // counting options in the row
+					
+					}//col pop
+				} // row
+				
+				for (int k=0;k<sudokuSize;k++)
+				{
+					if (arr[k] == 1)
+					{
+						for(int l=0;l<sudokuSize;l++)
+						{
+							if(rorc == 0)
+							{
+								if ( (Squares[i][l].getValue() & (1<<k)) > 0)
+								{
+									Squares[i][l].setIsFinal(true);
+									Squares[i][l].setValue(k+1);
+									uniqueFound = true;
+									count++;
+								} // finding the element in the row and setting it to true
+							} //row element finding
+							else
+							{
+								if ( (Squares[l][i].getValue() & (1<<k)) > 0)
+								{
+									Squares[l][i].setIsFinal(true);
+									Squares[l][i].setValue(k+1);
+									uniqueFound = true;
+									count++;
+								} // finding the element in the row and setting it to true
+							}//column element finding
+							
+						} // looking for element in the row
+						
+					}// unique value in the row
+				
+				} // going over the row again
+						
+			}// column
+		} //while uniqueFound = false
+
+		if (count >0)
+		{
+			System.out.println("Number of uniques found in" + rorc + " ="+count);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	} // findUniqueValue
+	
+	
+	
+	public void eliminateChoices()
+	{
 		
 		while (recentUpdates != false)
 		{
@@ -65,23 +186,7 @@ public class puzzle {
 			updateRow = false;
 			updateCol = false;
 				
-		}// Loop to build possibility matrix
-		
-		System.out.println("2 Count follows");
-		for (int i=0;i<sudokuSize;i++)
-		{
-			for (int j=0;j<sudokuSize;j++)
-			{
-				if (Squares[i][j].isFinal == false && (Squares[i][j].getOptions() == 2))
-				{
-					System.out.println("row "+i+ "Col "+j +"="+Squares[i][j].getValue());
-				}
-			}
-		}
-		
-		System.out.println("After mask in a box,row,column");
-		printSudoku(Squares);
-		return 0;
+		}// Loop to build possibility matrix	
 	}
 	
 	public boolean checkRowsColumns (int num, int rorc)
@@ -239,6 +344,25 @@ public class puzzle {
 		return isUpdate;
 	}//void fixBox
 	
+	/*
+	 * Function that will get number of options per row
+	 */
+	
+	public int[] getArrCount(int[] arr, int val)
+	{
+		int cnt = 0;
+		
+		for(int i=0;i<sudokuSize;i++)
+		{
+			if((val&(1<<i)) > 0 )
+			{
+				arr[i]++;	
+			}
+		}
+	
+		return arr;
+	} //getCount
+	
 	/* 
 	 * Function to estimate how many options are possible per square
 	 */
@@ -281,14 +405,20 @@ public class puzzle {
 	 */
 	void printSudoku(Square[][] args)
 	{
-		System.out.println("Sudoku as follows");
 		System.out.println("_________________________________________________________________________");
 		for (int i=0;i<sudokuSize;i++)
 		{
 			System.out.print("|");
 			for(int j=0;j<sudokuSize;j++)
 			{
-				System.out.print(args[i][j].getValue() + "\t|");
+				if (args[i][j].isFinal != true)
+				{
+					System.out.print( "="+ args[i][j].getValue() + "\t|");
+				}
+				else
+				{
+					System.out.print( args[i][j].getValue() + "\t|");
+				}
 							
 			}
 			System.out.println("");
