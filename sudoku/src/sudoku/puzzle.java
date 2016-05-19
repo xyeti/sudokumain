@@ -52,9 +52,15 @@ public class puzzle {
 		printSudoku(Squares);
 		
 		// 2. Check for Unique value present in box, row, column
-		recentUpdates = findUniqueValue(0);
+		
+		
+		recentUpdates = findUniqueValueRoC(0);
 		eliminateChoices();
-		recentUpdates = findUniqueValue(1);
+		recentUpdates = findUniqueValueRoC(1);
+		eliminateChoices();
+		printSudoku(Squares);
+		
+		recentUpdates = findUniqueValueBox();
 		eliminateChoices();
 		System.out.println("After Unique value elimination");
 		printSudoku(Squares);
@@ -78,8 +84,75 @@ public class puzzle {
 		return 0;
 	}
 	
-	public boolean findUniqueValue(int rorc)
+	private boolean findUniqueValueBox() {
+		int val=0;
+		boolean uniqueFound = true;
+		int count=0;
+		
+		
+		while(uniqueFound != false)
+		{
+			uniqueFound = false;
+			for (int i=0;i<sudokuSize;i++)
+			{
+				int[] arr = { 0, 0 , 0 , 0, 0, 0 , 0 , 0, 0};
+				int column = (i %boxSize)*boxSize;
+				int row =(i /boxSize)*boxSize;
+				
+				for(int j = row; j< (row+boxSize); j++)
+				{
+					for(int k = column; k< (column+boxSize); k++)
+					{
+						if (Squares[j][k].isFinal != true)
+						{
+							val = Squares[j][k].getValue();
+							arr = getArrCount(arr, val);
+						} // counting options in the box
+					}
+				}// Get elements already present in Box 
+				
+				for (int k=0;k<sudokuSize;k++)
+				{
+					if (arr[k] == 1)
+					{
+						for(int q = row; q< (row+boxSize); q++)
+						{
+							for(int r = column; r< (column+boxSize); r++)
+							{
+							    if ( (Squares[q][r].isFinal != true) && ((Squares[q][r].getValue() & (1<<k)) > 0))
+								{
+									Squares[q][r].setIsFinal(true);
+									Squares[q][r].setValue(k+1);
+									uniqueFound = true;
+									count++;
+								} // finding the element in the row and setting it to true
+						
+							} // looking for unique element in the box
+						
+						}// unique value in the box loop
+						
+					} // checking arr w/ elements in box	
+							
+				} // updating the value in Box
+			
+			} // Repeat for all boxes
+		} // Repeat till all unique boxes are filled
+		
+		if (count >0)
+		{
+			System.out.println("Number of uniques found in box= "+count);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	
+	} //findUniqueValueBox
+
+	public boolean findUniqueValueRoC(int rorc)
 	{
+		
 		int val=0;
 		boolean uniqueFound = true;
 		int count=0;
@@ -121,7 +194,7 @@ public class puzzle {
 						{
 							if(rorc == 0)
 							{
-								if ( (Squares[i][l].getValue() & (1<<k)) > 0)
+								if ((Squares[i][l].isFinal != true) &&( (Squares[i][l].getValue() & (1<<k)) > 0))
 								{
 									Squares[i][l].setIsFinal(true);
 									Squares[i][l].setValue(k+1);
@@ -131,7 +204,7 @@ public class puzzle {
 							} //row element finding
 							else
 							{
-								if ( (Squares[l][i].getValue() & (1<<k)) > 0)
+								if ((Squares[l][i].isFinal != true) &&((Squares[l][i].getValue() & (1<<k)) > 0))
 								{
 									Squares[l][i].setIsFinal(true);
 									Squares[l][i].setValue(k+1);
@@ -350,8 +423,6 @@ public class puzzle {
 	
 	public int[] getArrCount(int[] arr, int val)
 	{
-		int cnt = 0;
-		
 		for(int i=0;i<sudokuSize;i++)
 		{
 			if((val&(1<<i)) > 0 )
