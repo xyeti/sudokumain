@@ -3,6 +3,7 @@ package sudoku;
 
 public class puzzle {
 	final int sudokuSize =9;
+	final int maxVal = (1<<sudokuSize)-1;
 	Double xx = Math.sqrt(sudokuSize);
 	final int boxSize = xx.intValue();
 	
@@ -52,18 +53,16 @@ public class puzzle {
 		printSudoku(Squares);
 		
 		// 2. Check for Unique value present in box, row, column
-		
-		
-		recentUpdates = findUniqueValueRoC(0);
-		eliminateChoices();
-		recentUpdates = findUniqueValueRoC(1);
-		eliminateChoices();
-		printSudoku(Squares);
-		
-		recentUpdates = findUniqueValueBox();
-		eliminateChoices();
+		findUniqueValue();
 		System.out.println("After Unique value elimination");
 		printSudoku(Squares);
+		
+		// 3 check for completion of solution
+		if (checkSolution())
+		{
+
+			return 1;
+		}
 		
 /*		
 		System.out.println("2 Count follows");
@@ -84,6 +83,55 @@ public class puzzle {
 		return 0;
 	}
 	
+	private boolean checkSolution()
+	{
+		int x =0;
+		int y =0;
+		int rowCount =0;
+		int colCount =0;
+
+		for(int i=0;i<sudokuSize;i++)
+		{
+			for (int j=0;j<sudokuSize;j++)
+			{
+				x |= 1 << (Squares[i][j].getValue()-1);
+				y |= 1 << (Squares[j][i].getValue()-1);
+			}
+			if (x ==maxVal)
+			{
+				rowCount++;
+				
+			}
+			if  (y==maxVal)
+			{
+				colCount++;
+			}
+			x=0;
+			y=0;
+
+		} //for loop
+		
+		if ((rowCount == sudokuSize)&&(colCount == sudokuSize))
+		{
+			return true;
+		}
+		else
+			return false;
+		
+	}
+	
+	
+	private void findUniqueValue()
+	{
+		recentUpdates = findUniqueValueRoC(0);
+		eliminateChoices();
+		recentUpdates = findUniqueValueRoC(1);
+		eliminateChoices();
+		recentUpdates = findUniqueValueBox();
+		eliminateChoices();
+		
+	}
+		
 	private boolean findUniqueValueBox() {
 		int val=0;
 		boolean uniqueFound = true;

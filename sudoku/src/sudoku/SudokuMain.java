@@ -11,7 +11,7 @@ public class SudokuMain {
 		
 		int x = sudoku.solvePuzzle(args);
 		
-		if (x >0)
+		if (x == 1)
 		{
 			System.out.println("Sudoku is solved");
 		}
