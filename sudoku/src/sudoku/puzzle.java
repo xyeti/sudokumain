@@ -12,7 +12,7 @@ public class puzzle {
 	boolean updateBox = false;
 	boolean updateRow = false;
 	boolean updateCol = false;
-		
+	boolean puzzleStatus = false;	
 	
 	Square [][] Squares = new Square [sudokuSize][sudokuSize];
 	
@@ -53,14 +53,13 @@ public class puzzle {
 		printSudoku(Squares);
 		
 		// 2. Check for Unique value present in box, row, column
-		findUniqueValue();
+		puzzleStatus= findUniqueValue();
 		System.out.println("After Unique value elimination");
 		printSudoku(Squares);
 		
 		// 3 check for completion of solution
-		if (checkSolution())
+		if (puzzleStatus)
 		{
-
 			return 1;
 		}
 		
@@ -121,15 +120,40 @@ public class puzzle {
 	}
 	
 	
-	private void findUniqueValue()
+	private boolean findUniqueValue()
 	{
-		recentUpdates = findUniqueValueRoC(0);
-		eliminateChoices();
-		recentUpdates = findUniqueValueRoC(1);
-		eliminateChoices();
-		recentUpdates = findUniqueValueBox();
-		eliminateChoices();
+		boolean rowF = false;
+		boolean colF = false;
+		boolean boxF = false;
+		recentUpdates = true;
 		
+		while (recentUpdates != false)
+		{
+			recentUpdates = findUniqueValueRoC(0);
+			//printSudoku(Squares);
+			rowF = eliminateChoices();
+			//printSudoku(Squares);
+					
+			recentUpdates = findUniqueValueRoC(1);
+			//printSudoku(Squares);
+			colF = eliminateChoices();
+			//printSudoku(Squares);
+			
+			recentUpdates = findUniqueValueBox();
+			//printSudoku(Squares);
+			boxF = eliminateChoices();
+			//printSudoku(Squares);
+			
+			recentUpdates = (rowF | colF | boxF) ;
+			rowF = false;
+			colF = false;
+			boxF = false;
+		}
+		if (checkSolution())
+		{
+			return true;
+		}
+		return false;
 	}
 		
 	private boolean findUniqueValueBox() {
@@ -242,7 +266,7 @@ public class puzzle {
 						{
 							if(rorc == 0)
 							{
-								if ((Squares[i][l].isFinal != true) &&( (Squares[i][l].getValue() & (1<<k)) > 0))
+								if ((Squares[i][l].isFinal != true) && ( (Squares[i][l].getValue() & (1<<k)) > 0))
 								{
 									Squares[i][l].setIsFinal(true);
 									Squares[i][l].setValue(k+1);
@@ -283,9 +307,9 @@ public class puzzle {
 	
 	
 	
-	public void eliminateChoices()
+	public boolean eliminateChoices()
 	{
-		
+		int eliminated = 0;
 		while (recentUpdates != false)
 		{
 			recentUpdates = false;
@@ -306,8 +330,16 @@ public class puzzle {
 			updateBox = false;
 			updateRow = false;
 			updateCol = false;
-				
-		}// Loop to build possibility matrix	
+			eliminated++;
+		}// Loop to build possibility matrix
+		
+		if (eliminated > 1)
+		{
+			System.out.println("Eliminated "+eliminated+ "choices");
+			return true;
+		}
+		
+		return false;
 	}
 	
 	public boolean checkRowsColumns (int num, int rorc)
