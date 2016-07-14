@@ -65,31 +65,90 @@ public class puzzle {
 		}
 		
 		// 4 eliminate twins
-		System.out.println("2 Count follows");
 		puzzleStatus = findTwins();
-		System.out.println("Value after Twins elimination");
 		
-		for (int i=0;i<sudokuSize;i++)
-		{
-			for (int j=0;j<sudokuSize;j++)
-			{
-				if (Squares[i][j].isFinal == false && (Squares[i][j].getOptions() == 2))
-				{
-					System.out.println("row "+i+ "Col "+j +"="+Squares[i][j].getValue());
-				}
-			}
-		}
-		//System.out.println("After mask in a box,row,column");
-		//printSudoku(Squares);
+		System.out.println("Value after Twins elimination");
+		printSudoku(Squares);
 		return 0;
 	}
 	
 	private boolean findTwins()
 	{
 		boolean ret = false;
+		boolean ret1 = false;
+		boolean ret2 = false;
+		recentUpdates = true;
 		
-		ret = findBoxTwins();
+		while(recentUpdates !=false)
+		{
+			recentUpdates = findBoxTwins();
+			ret = eliminateChoices();
+			
+			recentUpdates = findRowColTwins(0);
+			ret1 = eliminateChoices();
+			
+			recentUpdates = findRowColTwins(1);
+			ret2 = eliminateChoices();
+			
+			recentUpdates = ret|ret1|ret2;
+			ret = ret1 = ret2 = false;
+			
+		} // checking for anything changed
 		
+		if(checkSolution())
+		{
+			return true;
+		}
+		
+		return false;
+	}
+	
+	private boolean findRowColTwins (int roC)
+	{
+		boolean ret = false;
+		for(int i = 0; i< sudokuSize; i++)
+		{
+			ArrayList<Integer> twinArr = new ArrayList<>();
+			for(int j = 0; j< sudokuSize; j++)
+			{
+				if (roC == 0)
+				{
+					if (Squares[i][j].isFinal == false && (Squares[i][j].getOptions() == 2))
+					{
+						twinArr.add(Squares[i][j].getValue());
+					}
+				}
+				else 
+				{
+					if (Squares[j][i].isFinal == false && (Squares[j][i].getOptions() == 2))
+					{
+						twinArr.add(Squares[j][i].getValue());
+					}
+				}
+			}// col. 
+			
+			for (int ii=0; ii<twinArr.size();ii++)
+			{
+				for (int jj=ii+1; jj<twinArr.size();jj++)
+				{
+					int xxx = twinArr.get(ii);
+					int yyy = twinArr.get(jj);
+					if (xxx == yyy)
+					{
+						if (roC == 0)
+							eliminateTwinFromRoC(xxx, 0, i);
+						else
+							eliminateTwinFromRoC(xxx, 1, i);
+						
+					//	twinArr.remove(Integer.valueOf(xxx));
+					//	twinArr.remove(Integer.valueOf(yyy));
+						ret = true;
+					}
+				}//j+1
+			}//i
+			
+			
+		}//Row
 		
 		return ret;
 	}
@@ -100,13 +159,11 @@ public class puzzle {
 		
 		for (int boxnum=0;boxnum<sudokuSize;boxnum++)
 		{
-			
 			ArrayList<Integer> twinArr = new ArrayList<>();
 			//ArrayList<Integer> twinArr = new ArrayList<>();
 			
 			int column = (boxnum%boxSize)*boxSize;
 			int row =(boxnum/boxSize)*boxSize;
-			int count=0;
 	
 	//		System.out.println("Checking for twin in Box #" + boxnum);
 			
@@ -118,28 +175,70 @@ public class puzzle {
 					{
 						twinArr.add(Squares[i][j].getValue());
 					}
-					
-				}
+				}// col. 
 			}// get the box twin 
 			
 			for (int i=0; i<twinArr.size();i++)
 			{
 				for (int j=i+1; j<twinArr.size();j++)
 				{
-					if (twinArr.get(i) == twinArr.get(j))
+					int xxx = twinArr.get(i);
+					int yyy = twinArr.get(j);
+					if (xxx == yyy)
 					{
-						eliminateTwinFromBox(twinArr.get(i), boxnum);
-						twinArr.remove(twinArr.get(i));
+						eliminateTwinFromBox(xxx, boxnum);
+						twinArr.remove(Integer.valueOf(xxx));
+						twinArr.remove(Integer.valueOf(yyy));
 						ret = true;
 					}
 				}//j+1
 				
 			}//i
 			
-		}
+		}//Running it through for all boxes
 		
 		return ret;
 	}
+	
+	private void eliminateTwinFromRoC(int val, int roC, int rC)
+	{
+			for(int j = 0; j< sudokuSize; j++)
+			{
+				if (roC == 0)
+				{
+					if (Squares[rC][j].isFinal == false && (Squares[rC][j].getValue() != val))
+					{
+						int q = (Squares[rC][j].getValue() & (~val));
+						
+						Squares[rC][j].setOptions(getValuesCount(q));
+						if (getValuesCount(q)== 1)
+						{
+							Squares[rC][j].setIsFinal(true);
+							Squares[rC][j].setValue(getValueFromBits(q));
+						}
+						else
+							Squares[rC][j].setValue(q);
+					}
+				}
+				else
+				{
+					if (Squares[j][rC].isFinal == false && (Squares[j][rC].getValue() != val))
+					{
+						int q = (Squares[j][rC].getValue() & (~val));
+						
+						Squares[j][rC].setOptions(getValuesCount(q));
+						if (getValuesCount(q)== 1)
+						{
+							Squares[j][rC].setIsFinal(true);
+							Squares[j][rC].setValue(getValueFromBits(q));
+						}
+						else
+							Squares[j][rC].setValue(q);
+					}
+				}
+			}// J
+				
+	} //eliminate Twin from Row or Col
 	
 	private void eliminateTwinFromBox(int val, int box)
 	{
@@ -154,11 +253,13 @@ public class puzzle {
 				{
 					int q = (Squares[i][j].getValue() & (~val));
 					Squares[i][j].setValue(q);
+					Squares[i][j].setOptions(getValuesCount(q));
 				}
 				
-			}
-		}// get the box twin 
-	}
+			}// J
+		}// get the box twin
+		
+	}//eliminate Twin box
 	
 	private boolean checkSolution()
 	{
