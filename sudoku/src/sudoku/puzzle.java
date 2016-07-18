@@ -13,7 +13,7 @@ public class puzzle {
 	boolean updateBox = false;
 	boolean updateRow = false;
 	boolean updateCol = false;
-	boolean puzzleStatus = false;	
+	boolean puzzleStatus = true;	
 	
 	Square [][] Squares = new Square [sudokuSize][sudokuSize];
 	
@@ -46,36 +46,45 @@ public class puzzle {
 		
 		System.out.println("Original puzzle");
 		//printSudoku(Squares);
+		int round =0;
 		
-		
-		// 1. Check boxes, rows and columns
-		eliminateChoices();
-		System.out.println("After First elimination");
-		//printSudoku(Squares);
-		
-		// 2. Check for Unique value present in box, row, column
-		puzzleStatus= findUniqueValue();
-		System.out.println("After Unique value elimination");
-		//printSudoku(Squares);
-		
-		// 3 check for completion of solution
-		if (puzzleStatus)
-			return 1;
+		while(puzzleStatus != false)
+		{
+			// 1. Check boxes, rows and columns
+			boolean elC = eliminateChoices();
+			System.out.println("After elimination: round"+round);
+			// 1.5 Check for solution complete
+			if (checkSolution())
+				return 1;
+			
+			// 2. Check for Unique value present in box, row, column
+			boolean uV = findUniqueValue();
+			System.out.println("After Unique value elimination:round"+round);
+			if (checkSolution())
+				return 1;
+					
+			// 3 eliminate twins
+			boolean fTw = findTwins();
+			System.out.println("Value after Twins elimination:round"+round);
+			//printSudoku(Squares);
+			if (checkSolution())
+				return 1;
+			
+			//4 eliminate triplets
+			boolean fTr = findTrips();
+			System.out.println("Value after Trips elimination:round"+round);
+			//printSudoku(Squares);
+			if (checkSolution())
+				return 1;
+
+			//Rinse and Repeat		
+			round++;
+					
+			puzzleStatus = (fTr|fTw|uV|elC); 
+			
+		}//repeat the process till Solution is Solved
 				
-		// 4 eliminate twins
-		puzzleStatus = findTwins();
-		System.out.println("Value after Twins elimination");
-		printSudoku(Squares);
-		if (puzzleStatus)
-			return 1;
-		
-		//5 eliminate triplets
-		puzzleStatus = findTrips();
-		System.out.println("Value after Trips elimination");
-		printSudoku(Squares);
-		if (puzzleStatus)
-			return 1;
-		
+		System.out.println("Couldnt solve the puzzle");
 		return 0;
 	}
 	private boolean findTrips()
@@ -120,7 +129,7 @@ public class puzzle {
 			int column = (boxnum%boxSize)*boxSize;
 			int row =(boxnum/boxSize)*boxSize;
 	
-			System.out.println("Checking for twin in Box #" + boxnum);
+			//System.out.println("Checking for twin in Box #" + boxnum);
 			
 			for(int i = row; i< (row+boxSize); i++)
 			{
@@ -141,10 +150,10 @@ public class puzzle {
 					int yyy = tripArr.get(j);
 					if (xxx == yyy)
 					{
-						boolean found = findDoubleBox(xxx,boxnum);
-						if (found)
+						int twin = findDoubleBox(xxx,boxnum);
+						if (twin>0)
 						{
-							eliminateValFromBox(xxx, boxnum);
+							eliminateValFromBox(xxx,twin,boxnum);
 							//tripArr.remove(Integer.valueOf(xxx));
 							//tripArr.remove(Integer.valueOf(yyy));
 							ret = true;
@@ -192,10 +201,10 @@ public class puzzle {
 					int yyy = tripArr.get(jj);
 					if (xxx == yyy)
 					{
-						boolean found = findDoubleRorC(xxx,i,roC);
-						if (found)
+						int twin = findDoubleRorC(xxx,i,roC);
+						if (twin>0)
 						{
-							eliminateValFromRoC(xxx, roC, i);
+							eliminateValFromRoC(xxx,twin,roC,i);
 							ret = true;
 						}
 					}//FoundDouble
@@ -208,7 +217,7 @@ public class puzzle {
 		return ret;
 	}
 
-	private boolean findDoubleRorC(int val, int rC, int roC)
+	private int findDoubleRorC(int val, int rC, int roC)
 	{
 		for(int j = 0; j< sudokuSize; j++)
 		{
@@ -219,7 +228,7 @@ public class puzzle {
 					int q = (Squares[rC][j].getValue() & val);
 					if (q == Squares[rC][j].getValue())
 					{
-						return true;
+						return q;
 					}
 				}
 			}
@@ -230,15 +239,15 @@ public class puzzle {
 					int q = (Squares[j][rC].getValue() & val);
 					
 					if (q == Squares[j][rC].getValue())
-						return true;
+						return q;
 				}
 			}
 		}// J
 			
-		return false;
+		return 0;
 	}
 	
-	private boolean findDoubleBox(int trip, int box)
+	private int findDoubleBox(int trip, int box)
 	{
 		int column = (box%boxSize)*boxSize;
 		int row =(box/boxSize)*boxSize;
@@ -252,12 +261,12 @@ public class puzzle {
 					int q = (Squares[i][j].getValue() & trip);
 					if (q == Squares[i][j].getValue())
 					{
-						return true;
+						return q;
 					}
 				}//find a double to match a triple
 			}// J
 		}// get the box Double
-		return false;
+		return 0;
 	}
 	
 	private boolean findTwins()
@@ -285,7 +294,7 @@ public class puzzle {
 			
 		} // checking for anything changed
 		
-		if (count>0)
+		if (count >0)
 			return true;
 		else
 			return false;
@@ -324,9 +333,9 @@ public class puzzle {
 					if (xxx == yyy)
 					{
 						if (roC == 0)
-							eliminateValFromRoC(xxx, 0, i);
+							eliminateValFromRoC(xxx,0,0,i);
 						else
-							eliminateValFromRoC(xxx, 1, i);
+							eliminateValFromRoC(xxx,0,1,i);
 						
 					//	twinArr.remove(Integer.valueOf(xxx));
 					//	twinArr.remove(Integer.valueOf(yyy));
@@ -374,7 +383,7 @@ public class puzzle {
 					int yyy = twinArr.get(j);
 					if (xxx == yyy)
 					{
-						eliminateValFromBox(xxx, boxnum);
+						eliminateValFromBox(xxx,0, boxnum);
 						twinArr.remove(Integer.valueOf(xxx));
 						twinArr.remove(Integer.valueOf(yyy));
 						ret = true;
@@ -388,13 +397,15 @@ public class puzzle {
 		return ret;
 	}
 	
-	private void eliminateValFromRoC(int val, int roC, int rC)
+	private void eliminateValFromRoC(int val, int val1, int roC, int rC)
 	{
 			for(int j = 0; j< sudokuSize; j++)
 			{
 				if (roC == 0)
 				{
-					if (Squares[rC][j].isFinal == false && (Squares[rC][j].getValue() != val))
+					if (Squares[rC][j].isFinal == false && 
+							((Squares[rC][j].getValue() != val)&&
+									(Squares[rC][j].getValue() != val1)))
 					{
 						int q = (Squares[rC][j].getValue() & (~val));
 						
@@ -410,7 +421,9 @@ public class puzzle {
 				}
 				else
 				{
-					if (Squares[j][rC].isFinal == false && (Squares[j][rC].getValue() != val))
+					if (Squares[j][rC].isFinal == false && 
+							((Squares[j][rC].getValue() != val)&&
+									(Squares[j][rC].getValue() != val1)))
 					{
 						int q = (Squares[j][rC].getValue() & (~val));
 						
@@ -428,7 +441,7 @@ public class puzzle {
 				
 	} //eliminate Twin from Row or Col
 	
-	private void eliminateValFromBox(int val, int box)
+	private void eliminateValFromBox(int val,int val1, int box)
 	{
 		int column = (box%boxSize)*boxSize;
 		int row =(box/boxSize)*boxSize;
@@ -437,7 +450,9 @@ public class puzzle {
 		{
 			for(int j = column; j< (column+boxSize); j++)
 			{
-				if (Squares[i][j].isFinal == false && (Squares[i][j].getValue() != val))
+				if (Squares[i][j].isFinal == false && 
+						((Squares[i][j].getValue() != val)&&
+								((Squares[i][j].getValue() != val1))))
 				{
 					int q = (Squares[i][j].getValue() & (~val));
 					Squares[i][j].setValue(q);
@@ -479,6 +494,7 @@ public class puzzle {
 		
 		if ((rowCount == sudokuSize)&&(colCount == sudokuSize))
 		{
+			printSudoku(Squares);
 			return true;
 		}
 		else
@@ -493,6 +509,7 @@ public class puzzle {
 		boolean colF = false;
 		boolean boxF = false;
 		recentUpdates = true;
+		int count=0;
 		
 		while (recentUpdates != false)
 		{
@@ -515,12 +532,12 @@ public class puzzle {
 			rowF = false;
 			colF = false;
 			boxF = false;
+			count++;
 		}
-		if (checkSolution())
-		{
+		if (count>0)
 			return true;
-		}
-		return false;
+		else
+			return false;
 	}
 		
 	private boolean findUniqueValueBox() {
@@ -680,6 +697,7 @@ public class puzzle {
 	public boolean eliminateChoices()
 	{
 		int eliminated = 0;
+			
 		while (recentUpdates != false)
 		{
 			recentUpdates = false;
